@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Broadcaster Chat</title>
+   
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        /* Reset and base styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        /* Main container */
+        #chat-container {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        /* Header */
+        .chat-header {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-header h2 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        
+        /* Join section */
+        #join-section {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        /* Messages area */
+        #messages-container {
+            height: 350px;
+            position: relative;
+        }
+        
+        #messages {
+            height: 100%;
+            overflow-y: auto;
+            padding: 15px;
+        }
+        
+        .message {
+            margin-bottom: 12px;
+            max-width: 85%;
+        }
+        
+        .message.self {
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .message-bubble {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 12px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            word-break: break-word;
+        }
+        
+        .message-bubble.self {
+            background-color: #e1f5fe;
+            border-top-right-radius: 0;
+        }
+        
+        .message-bubble.other {
+            background-color: #f5f5f5;
+            border-top-left-radius: 0;
+        }
+        
+        .message-info {
+            font-size: 0.75rem;
+            color: #777;
+            margin-top: 3px;
+        }
+        
+        .system-message {
+            text-align: center;
+            color: #757575;
+            font-style: italic;
+            margin: 10px 0;
+            font-size: 0.85rem;
+        }
+        
+        /* Footer with input */
+        #input-section {
+            padding: 15px;
+            border-top: 1px solid #eee;
+        }
+        
+        #input-container {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            right: 15px;
+            top: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .invite-link-container {
+            display: flex;
+            margin: 15px 0;
+        }
+
+        .invite-link-container input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            font-size: 14px;
+        }
+
+        .invite-link-container button {
+            padding: 10px 15px;
+            background: #6e8efb;
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+        }
+
+        .expiry-text {
+            font-size: 12px;
+            color: #777;
+            margin-top: 10px;
+        }
+        /* Form controls */
+        input, select, button {
+            font-family: inherit;
+            font-size: 14px;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        
+        input, select {
+            flex-grow: 1;
+        }
+        
+        input:focus, select:focus {
+            border-color: #6e8efb;
+            box-shadow: 0 0 0 2px rgba(110, 142, 251, 0.1);
+        }
+        
+        button {
+            background: #6e8efb;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 10px 15px;
+            font-weight: 600;
+            min-width: 80px;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #5c7cfa;
+        }
+        
+        button:disabled {
+            background: #b0bec5;
+            cursor: not-allowed;
+        }
+        
+        /* Responsive */
+        @media (max-width: 550px) {
+            #chat-container {
+                height: 100vh;
+                max-height: 100vh;
+                border-radius: 0;
+                display: flex;
+                flex-direction: column;
+            }
+            
+            #messages-container {
+                flex-grow: 1;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+        }
+        
+        /* Scroll styling */
+        #messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        #messages::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        
+        /* Typing indicator */
+        #typing-indicator {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 8px 15px;
+            font-style: italic;
+            color: #777;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-top: 1px solid #eee;
+            display: none;
+        }
+        
+        /* Typing animation */
+        .typing-animation {
+            display: inline-block;
+        }
+        
+        .typing-dot {
+            display: inline-block;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background-color: #777;
+            margin-right: 3px;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+            margin-right: 0;
+        }
+        
+        @keyframes typingAnimation {
+            0% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+            50% { transform: translateY(0); }
+            100% { transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div class="chat-header">
+            <button id="generate-invite" onclick="generateInviteLink()" class="invite-button">
+                <i class="fas fa-link"></i> Generate Invite Link
+              </button>
+            <h2>Broadcaster Chat</h2>
+            <div id="room-info">Room: <span id="current-room">general</span></div>
+        </div>
+        
+        <div id="join-section">
+            <div class="input-group">
+                <input type="text" id="usernameInput" placeholder="Enter your name" />
+                <select id="roomSelect">
+                    <option value="general">General Room</option>
+                    <option value="tech">Tech Room</option>
+                    <option value="random">Random Room</option>
+                </select>
+                <button id="joinBtn" onclick="joinRoom()">Join Room</button>
+            </div>
+        </div>
+        
+        <div id="messages-container">
+            <div id="messages"></div>
+            <div id="typing-indicator">
+                <span id="typing-text"></span>
+                <span class="typing-animation">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                </span>
+            </div>
+        </div>
+        
+        <div id="input-section">
+            <div id="input-container">
+                <input type="text" id="messageInput" placeholder="Type a message" disabled />
+                <button id="sendBtn" onclick="sendMessage()" disabled>Send</button>
+            </div>
+        </div>
+    </div>
+    <div id="inviteLinkModal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <span class="close">&times;</span>
+            <h2>Invite Link</h2>
+          </div>
+          <div class="modal-body">
+            <!-- Invite link will be inserted here -->
+          </div>
+          <div class="modal-footer">
+            <!--close button removed for now-->
+          </div>
+        </div>
+      </div>
+    
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+        // Check if joining from invite link
+        const savedUsername = sessionStorage.getItem('username');
+        const savedRoom = sessionStorage.getItem('room');
+        
+        if (savedUsername && savedRoom) {
+            usernameInput.value = savedUsername;
+            roomSelect.value = savedRoom;
+            // Auto-join the room
+            joinRoom();
+            // Clear session storage
+            sessionStorage.removeItem('username');
+            sessionStorage.removeItem('room');
+        }
+        });
+
+        function showInviteLinkModal(inviteLink) {
+            const modal = document.getElementById('inviteLinkModal');
+            const modalText = modal.querySelector('.modal-body');
+            
+            // Add the invite link as a clickable button
+            const linkElement = document.createElement('a');
+            linkElement.href = inviteLink; // Set the invite link as the href
+            linkElement.textContent = "Click here to join the room"; // The text on the button
+            linkElement.style.textDecoration = 'none'; // Remove underline
+            linkElement.style.padding = '10px 15px';
+            linkElement.style.backgroundColor = '#6e8efb';
+            linkElement.style.color = 'white';
+            linkElement.style.borderRadius = '5px';
+            linkElement.style.display = 'inline-block';
+            linkElement.style.marginTop = '15px';
+            linkElement.style.textAlign = 'center';
+            linkElement.target = "_blank";  // Open in new tab
+            
+            modalText.textContent = `Here is your invite link: `;
+            modalText.appendChild(linkElement); // Append the link as a button
+            
+            modal.style.display = 'block';
+        }
+
+        const socket = io("http://192.168.1.8:4000");  // Replace with your PC's IP address
+        let usernameInput = document.getElementById("usernameInput");
+        let messageInput = document.getElementById("messageInput");
+        let messages = document.getElementById("messages");
+        let roomSelect = document.getElementById("roomSelect");
+        let currentRoomSpan = document.getElementById("current-room");
+        let sendBtn = document.getElementById("sendBtn");
+        let joinBtn = document.getElementById("joinBtn");
+        let typingIndicator = document.getElementById("typing-indicator");
+        let typingText = document.getElementById("typing-text");
+        let currentRoom = "general";  // Default room
+        let username = "";
+        let typingTimeout = null;
+        
+        // Track who's currently typing
+        let typingUsers = new Set();
+
+        // Log when socket connects
+        socket.on("connect", () => {
+            console.log("Connected to the server!");
+        });
+
+        // Handle connection errors
+        socket.on("connect_error", (error) => {
+            console.error("Connection error:", error);
+            displaySystemMessage("Unable to connect to chat server. Please try again later.");
+        });
+
+        // Receive message and display it
+        socket.on("receive", ({ username: msgUsername, message, timestamp }) => {
+            displayMessage(msgUsername, message, timestamp, msgUsername === username);
+            
+            // Remove user from typing list when they send a message
+            if (typingUsers.has(msgUsername)) {
+                typingUsers.delete(msgUsername);
+                updateTypingIndicator();
+            }
+        });
+
+        // User joined notification
+        socket.on("userJoined", (joinedUsername) => {
+            if (joinedUsername !== username) {
+                displaySystemMessage(`${joinedUsername} joined the room`);
+            }
+        });
+
+        // User left notification
+        socket.on("userLeft", (leftUsername) => {
+            displaySystemMessage(`${leftUsername} left the room`);
+            
+            // Remove user from typing list if they leave
+            if (typingUsers.has(leftUsername)) {
+                typingUsers.delete(leftUsername);
+                updateTypingIndicator();
+            }
+        });
+        
+        // User typing notification
+        socket.on("userTyping", ({ username: typingUsername, isTyping }) => {
+            if (typingUsername !== username) {
+                if (isTyping) {
+                    typingUsers.add(typingUsername);
+                } else {
+                    typingUsers.delete(typingUsername);
+                }
+                updateTypingIndicator();
+            }
+        });
+
+        // Function to join room
+        function joinRoom() {
+            username = usernameInput.value.trim() || "Anonymous";
+            currentRoom = roomSelect.value;
+            
+            if (username === "Anonymous") {
+                // Generate random username if none provided
+                const randomNum = Math.floor(Math.random() * 10000);
+                username = `Anonymous${randomNum}`;
+                usernameInput.value = username;
+            }
+            
+            socket.emit("joinRoom", { username, room: currentRoom });
+            
+            // Update UI
+            usernameInput.disabled = true;
+            roomSelect.disabled = true;
+            joinBtn.disabled = true;
+            messageInput.disabled = false;
+            sendBtn.disabled = false;
+            currentRoomSpan.textContent = currentRoom;
+            
+            // Clear messages
+            messages.innerHTML = '';
+            displaySystemMessage(`You joined the ${currentRoom} room as ${username}`);
+            
+            // Focus message input
+            messageInput.focus();
+        }
+
+        // Function to send message
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message === "") return;
+            
+            const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            socket.emit("message", { username, message, room: currentRoom });
+            
+            messageInput.value = "";  // Clear input after sending message
+            
+            // Emit that we stopped typing
+            socket.emit("typing", { username, room: currentRoom, isTyping: false });
+            clearTimeout(typingTimeout);
+            
+            messageInput.focus();
+        }
+
+        // Function to change room
+        function changeRoom() {
+            // Only relevant if we implement room changing after joining
+            currentRoom = roomSelect.value;
+            messages.innerHTML = ''; // Clear messages when changing rooms
+            socket.emit("joinRoom", { username, room: currentRoom });
+            currentRoomSpan.textContent = currentRoom;
+            displaySystemMessage(`You changed to the ${currentRoom} room`);
+        }
+
+        // Function to display message
+        function displayMessage(msgUsername, messageText, timestamp, isSelf) {
+            const messageDiv = document.createElement("div");
+            messageDiv.className = `message ${isSelf ? 'self' : 'other'}`;
+            
+            const messageBubble = document.createElement("div");
+            messageBubble.className = `message-bubble ${isSelf ? 'self' : 'other'}`;
+            messageBubble.textContent = messageText;
+            
+            const messageInfo = document.createElement("div");
+            messageInfo.className = "message-info";
+            messageInfo.textContent = `${isSelf ? '' : msgUsername + ' '}${timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+            
+            messageDiv.appendChild(messageBubble);
+            messageDiv.appendChild(messageInfo);
+            messages.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // Function to display system message
+        function displaySystemMessage(text) {
+            const systemMsg = document.createElement("div");
+            systemMsg.className = "system-message";
+            systemMsg.textContent = text;
+            messages.appendChild(systemMsg);
+            scrollToBottom();
+        }
+
+        // Function to scroll chat to bottom
+        function scrollToBottom() {
+            messages.scrollTop = messages.scrollHeight;
+        }
+        
+        // Function to update typing indicator based on who's typing
+        function updateTypingIndicator() {
+            if (typingUsers.size === 0) {
+                typingIndicator.style.display = "none";
+            } else {
+                let typingMessage = "";
+                const typingArray = Array.from(typingUsers);
+                
+                if (typingArray.length === 1) {
+                    typingMessage = `${typingArray[0]} is typing`;
+                } else if (typingArray.length === 2) {
+                    typingMessage = `${typingArray[0]} and ${typingArray[1]} are typing`;
+                } else if (typingArray.length === 3) {
+                    typingMessage = `${typingArray[0]}, ${typingArray[1]} and ${typingArray[2]} are typing`;
+                } else {
+                    typingMessage = "Several people are typing";
+                }
+                
+                typingText.textContent = typingMessage;
+                typingIndicator.style.display = "block";
+            }
+        }
+        
+        // Handle typing events
+        messageInput.addEventListener("input", function() {
+            if (messageInput.value.trim() !== "") {
+                // Emit typing event
+                socket.emit("typing", { username, room: currentRoom, isTyping: true });
+                
+                // Clear existing timeout
+                clearTimeout(typingTimeout);
+                
+                // Set timeout to stop typing indicator after 2 seconds of inactivity
+                typingTimeout = setTimeout(() => {
+                    socket.emit("typing", { username, room: currentRoom, isTyping: false });
+                }, 2000);
+            } else {
+                // If input is empty, stop typing indicator
+                socket.emit("typing", { username, room: currentRoom, isTyping: false });
+                clearTimeout(typingTimeout);
+            }
+        });
+
+        // Handle Enter key on message input
+        messageInput.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }    
+        });
+        // Add this function to your existing JavaScript in index.html
+
+        function generateInviteLink() {
+            if (!username || !currentRoom) {
+                alert('You must join a room first!');
+                return;
+            }
+            
+            // Show loading indicator
+            const inviteButton = document.getElementById('generate-invite');
+            const originalText = inviteButton.textContent;
+            inviteButton.disabled = true;
+            inviteButton.textContent = 'Generating...';
+            
+            fetch('/api/invite', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    room: currentRoom,
+                    username: username,
+                    hours: 24 // Invite expires in 24 hours
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                inviteButton.disabled = false;
+                inviteButton.textContent = originalText;
+                
+                if (data.success) {
+                    // Show the link in a modal or alert
+                    showInviteLinkModal(data.inviteUrl, data.expires);
+                } else {
+                    alert('Failed to generate invite link: ' + data.message);
+                }
+            })
+            .catch(err => {
+                inviteButton.disabled = false;
+                inviteButton.textContent = originalText;
+                alert('Error generating invite link. Please try again.');
+                console.error('Error generating invite:', err);
+            });
+
+            
+        }
+        // Add this function to close the modal
+        function closeModal() {
+            const modal = document.getElementById('inviteLinkModal');
+            modal.style.display = 'none';
+        }
+
+        // Handle the cross button click
+        document.querySelector('.close').addEventListener('click', closeModal);
+
+        // Handle the Close Modal button click
+        document.querySelector('.close-modal-btn').addEventListener('click', closeModal);
+
+        // Optional: Close the modal when clicking outside the modal content
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('inviteLinkModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+
+       
+    </script>
+</body>
+</html>

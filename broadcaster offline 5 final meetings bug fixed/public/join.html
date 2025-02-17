@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Chat Room</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        #join-container {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h2 {
+            color: #6e8efb;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        
+        .room-info {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .join-form {
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        input {
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            outline: none;
+        }
+        
+        input:focus {
+            border-color: #6e8efb;
+            box-shadow: 0 0 0 2px rgba(110, 142, 251, 0.1);
+        }
+        
+        button {
+            padding: 12px;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        
+        button:hover {
+            opacity: 0.9;
+        }
+        
+        .error-message {
+            color: #e53935;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .loading {
+            text-align: center;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #6e8efb;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Copy Link Feature Styles */
+        .share-link {
+            display: none;
+            align-items: center;
+            margin: 15px 0;
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .share-link input {
+            flex: 1;
+            margin-right: 10px;
+            background-color: #fff;
+        }
+        
+        .copy-notification {
+            display: none;
+            background-color: #4caf50;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="join-container">
+        <div class="header">
+            <h2>Join Chat Room</h2>
+            <p>You've been invited to join a chat room!</p>
+        </div>
+        
+        <div class="room-info" id="room-info">
+            <p>Validating invite link...</p>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Checking invite link...</p>
+        </div>
+        
+        <div class="share-link" id="share-link">
+            <input type="text" id="invite-url" readonly />
+            <button id="copy-button">Copy Link</button>
+        </div>
+        
+        <form class="join-form" id="join-form" onsubmit="handleJoin(event)">
+            <input type="text" id="username" placeholder="Enter your username" required />
+            <button type="submit" id="join-button">Join Chat</button>
+        </form>
+        
+        <p class="error-message" id="error-message"></p>
+    </div>
+    
+    <div class="copy-notification" id="copy-notification">
+        Link copied to clipboard!
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inviteId = window.location.pathname.split('/join/')[1];
+            const roomInfo = document.getElementById('room-info');
+            const joinForm = document.getElementById('join-form');
+            const errorMessage = document.getElementById('error-message');
+            const loading = document.getElementById('loading');
+            const shareLink = document.getElementById('share-link');
+            const inviteUrl = document.getElementById('invite-url');
+            const copyButton = document.getElementById('copy-button');
+            const copyNotification = document.getElementById('copy-notification');
+            
+            // Set the invite URL
+            inviteUrl.value = window.location.href;
+            
+            // Show loading spinner
+            loading.style.display = 'block';
+            
+            let roomData = null;
+
+            // Validate the invite link
+            fetch(`/api/invite/${inviteId}`)
+                .then(response => response.json())
+                .then(data => {
+                    loading.style.display = 'none';
+
+                    if (data.success) {
+                        roomData = data;
+                        roomInfo.innerHTML = `
+                            <p><strong>Room:</strong> ${data.room}</p>
+                            <p>Enter your username to join the chat.</p>
+                        `;
+                        joinForm.style.display = 'flex';
+                        shareLink.style.display = 'flex'; // Show share link section
+                    } else {
+                        roomInfo.innerHTML = '<p>This invite link is invalid or has expired.</p>';
+                        errorMessage.textContent = data.message;
+                        errorMessage.style.display = 'block';
+                    }
+                })
+                .catch(err => {
+                    loading.style.display = 'none';
+                    roomInfo.innerHTML = '<p>Error validating invite link</p>';
+                    errorMessage.textContent = 'Please try again later or contact the person who sent you this link.';
+                    errorMessage.style.display = 'block';
+                    console.error('Error validating invite:', err);
+                });
+
+            // Copy link functionality
+            copyButton.addEventListener('click', () => {
+                inviteUrl.select();
+                document.execCommand('copy');
+                
+                // Show notification
+                copyNotification.style.display = 'block';
+                
+                // Hide notification after 2 seconds
+                setTimeout(() => {
+                    copyNotification.style.display = 'none';
+                }, 2000);
+            });
+
+            // Handle join form submission
+            window.handleJoin = (event) => {
+                event.preventDefault();
+                
+                const username = document.getElementById('username').value.trim();
+                if (!username) {
+                    alert('Please enter a username');
+                    return;
+                }
+
+                if (roomData) {
+                    // Save room info to session storage
+                    sessionStorage.setItem('username', username);
+                    sessionStorage.setItem('room', roomData.room);
+
+                    // Redirect to main chat page
+                    window.location.href = '/';
+                }
+            };
+
+            // Handle enter key on username input
+            document.getElementById('username').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    document.getElementById('join-button').click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
