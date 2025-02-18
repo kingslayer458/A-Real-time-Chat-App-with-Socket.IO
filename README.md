@@ -24,8 +24,8 @@
 
 | dashboard| inviting|
 |------------|-----------|
-| ![dashboard](.k1) | ![str](.k2) | 
-| ![st](.k3) | 
+| ![dashboard](k1.png) | ![str](k2.png) | 
+| ![st](k3.png) | 
 ---
 
 ## 🚀 How It Works
