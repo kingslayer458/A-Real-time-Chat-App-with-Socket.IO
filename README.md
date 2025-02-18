@@ -76,6 +76,8 @@ Broadcaster Chat follows a **client-server** architecture:
 - Update the **Socket.IO connection URL** in `index.html`:
    ```javascript
    const socket = io("http://your-server-ip:4000");
+    ```
+    ```
    http://your cureent ip_address:4000 --->for android and linux
    ```
 
