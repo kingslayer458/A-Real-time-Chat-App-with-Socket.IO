@@ -15,17 +15,17 @@
 ✅ **Fully responsive design** for mobile & desktop  
 ✅ **Smooth animations** for an engaging experience  
 
-![Broadcaster Chat Screenshot](https://via.placeholder.com/700x400?text=Broadcaster+Chat+Screenshot)
+![Broadcaster Chat Screenshot](k4.png)
 
 ---
 
 ## 📸 Screenshots
 
 
-| soon.... | soon..|
+| dashboard| inviting|
 |------------|-----------|
-| ![dashboard](.png) | ![streaming](.png) |
-
+| ![dashboard](.k1) | ![str](.k2) | 
+| ![st](.k3) | 
 ---
 
 ## 🚀 How It Works
