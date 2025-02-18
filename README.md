@@ -22,11 +22,13 @@
 ## 📸 Screenshots
 
 
-| dashboard| inviting|
+| Dashboard| invite|
 |------------|-----------|
-| ![dashboard](k1.png) | ![str](k2.png) | 
-| ![st](k3.png) | 
----
+| ![csc](k1.png) | ![cdsd](k2.png) |
+
+| session | output |
+|------------|-----------|
+| ![cscs](k3.png) | ![cscscsdc](k4.png) |
 
 ## 🚀 How It Works
 
