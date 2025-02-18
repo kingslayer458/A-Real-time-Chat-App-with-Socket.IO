@@ -52,26 +52,16 @@ Broadcaster Chat follows a **client-server** architecture:
 
 1️⃣ **Clone the Repository**
    ```bash
-   git clone https://github.com/yourusername/broadcaster-chat.git
-   cd broadcaster-chat
+   git clone https://github.com/kingslayer458/A-Real-time-Chat-App-with-Socket.IO.git
+   cd A-Real-time-Chat-App-with-Socket.IO
    ```
 
 2️⃣ **Install Dependencies**
    ```bash
    npm install
+   npm init -y
+   npm install express socket.io
    ```
-
-3️⃣ **Create a Public Directory**
-   ```bash
-   mkdir -p public
-   ```
-
-4️⃣ **Add HTML Files**
-   - Save `index.html` in the `public` folder.
-   - Save `join.html` in the `public` folder.
-
-5️⃣ **Create the Server File**
-   - Save your `server.js` file in the root directory.
 
 ### 🔹 Configuration
 
@@ -82,6 +72,7 @@ Broadcaster Chat follows a **client-server** architecture:
 - Update the **Socket.IO connection URL** in `index.html`:
    ```javascript
    const socket = io("http://your-server-ip:4000");
+   http://your cureent ip_address:4000 --->for android and linux
    ```
 
 ### 🔹 Running the Application
