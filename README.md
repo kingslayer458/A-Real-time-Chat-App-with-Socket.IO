@@ -15,7 +15,7 @@
 ✅ **Fully responsive design** for mobile & desktop  
 ✅ **Smooth animations** for an engaging experience  
 
-<img src="k4.png" width="300" height="200" />
+<img src="k4.png" width="450" />
 
 ---
 
