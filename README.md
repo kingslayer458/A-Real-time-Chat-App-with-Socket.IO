@@ -15,20 +15,10 @@
 ✅ **Fully responsive design** for mobile & desktop  
 ✅ **Smooth animations** for an engaging experience  
 
-![Broadcaster Chat Screenshot](k4.png)
+<img src="k4.png" width="300" height="200" />
 
 ---
 
-## 📸 Screenshots
-
-
-| Dashboard | Invite |
-|------------|-----------|
-| <img src="k1.png" width="350"/> | <img src="k2.png" width="350"/> |
-
-| Session | Output |
-|------------|-----------|
-| <img src="k3.png" width="350"/> | <img src="k4.png" width="350"/> |
 
 ## 🚀 How It Works
 
@@ -115,6 +105,17 @@ Broadcaster Chat follows a **client-server** architecture:
 
 ---
 ---
+
+## 📸 Screenshots
+
+
+| Dashboard | Invite |
+|------------|-----------|
+| <img src="k1.png" width="350"/> | <img src="k2.png" width="350"/> |
+
+| Session | Output |
+|------------|-----------|
+| <img src="k3.png" width="350"/> | <img src="k4.png" width="350"/> |
 
 ## 🔧 Troubleshooting
 
