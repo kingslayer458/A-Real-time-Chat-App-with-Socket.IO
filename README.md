@@ -59,7 +59,9 @@ Broadcaster Chat follows a **client-server** architecture:
 2️⃣ **Install Dependencies**
    ```bash
    npm install
+   ```
    npm init -y
+   ```
    npm install express socket.io
    ```
 
