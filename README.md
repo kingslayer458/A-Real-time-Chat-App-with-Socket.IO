@@ -24,11 +24,11 @@
 
 | Dashboard | Invite |
 |------------|-----------|
-| <img src="k1.png" width="500"/> | <img src="k2.png" width="500"/> |
+| <img src="k1.png" width="350"/> | <img src="k2.png" width="350"/> |
 
 | Session | Output |
 |------------|-----------|
-| <img src="k3.png" width="500"/> | <img src="k4.png" width="500"/> |
+| <img src="k3.png" width="350"/> | <img src="k4.png" width="350"/> |
 
 ## 🚀 How It Works
 
